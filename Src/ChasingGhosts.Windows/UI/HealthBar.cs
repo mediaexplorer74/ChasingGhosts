@@ -1,82 +1,60 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// ChasingGhosts.Windows.UI.HealthBar
 
 using ChasingGhosts.Windows.ViewModels;
-
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
 using Sharp2D.Engine.Common;
-using Sharp2D.Engine.Common.Components.Animations;
-using Sharp2D.Engine.Common.Components.Animations.Predefined;
 using Sharp2D.Engine.Common.ObjectSystem;
 using Sharp2D.Engine.Drawing;
 using Sharp2D.Engine.Infrastructure;
 
+#nullable disable
 namespace ChasingGhosts.Windows.UI
 {
-    public class HealthBar : GameObject
+  public class HealthBar : GameObject
+  {
+    private readonly PlayerViewModel viewModel;
+    private Texture2D text;
+    private float animHealth;
+
+    public HealthBar(PlayerViewModel viewModel)
     {
-        private readonly PlayerViewModel viewModel;
-
-        private Texture2D text;
-
-        private float animHealth;
-
-        public HealthBar(PlayerViewModel viewModel)
-        {
-            this.viewModel = viewModel;
-            this.animHealth = this.viewModel.Health;
-        }
-
-        public override void Initialize(IResolver resolver)
-        {
-            base.Initialize(resolver);
-
-            this.text = new Texture2D(resolver.Resolve<GraphicsDevice>(), 1, 1);
-            this.text.SetData(new[]
-            {
-                Color.White
-            });
-        }
-
-        public float Health => this.viewModel.Health;
-
-        public override void Update(GameTime time)
-        {
-            base.Update(time);
-
-            const int TriggersPerSecond = 20;
-
-            if (this.animHealth != this.Health)
-            {
-                var diff = TriggersPerSecond * (float)time.ElapsedGameTime.TotalSeconds;
-                if (this.animHealth > this.Health && this.animHealth - diff <= this.Health)
-                {
-                    this.animHealth = this.Health;
-                }
-                else if (this.animHealth < this.Health && this.animHealth - diff >= this.Health)
-                {
-                    this.animHealth = this.Health;
-                }
-                else
-                {
-                    this.animHealth += this.animHealth > this.Health ? -diff : diff;
-                }
-            }
-        }
-
-        public override void Draw(SharpDrawBatch batch, GameTime time)
-        {
-            base.Draw(batch, time);
-
-            var screen = Resolution.VirtualScreen;
-            var perc = 1f - (this.animHealth / 100f);
-
-            batch.Draw(this.text, new Rectangle(0, 0, (int)screen.X, (int)screen.Y), Color.DarkRed * perc * .7f);
-        }
+      this.viewModel = viewModel;
+      this.animHealth = this.viewModel.Health;
     }
+
+    public override void Initialize(IResolver resolver)
+    {
+      base.Initialize(resolver);
+      this.text = new Texture2D(resolver.Resolve<GraphicsDevice>(), 1, 1);
+      this.text.SetData<Color>(new Color[1]{ Color.White });
+    }
+
+    public float Health => this.viewModel.Health;
+
+    public override void Update(GameTime time)
+    {
+      base.Update(time);
+      if ((double) this.animHealth == (double) this.Health)
+        return;
+      float num = (float) (20.0 * time.ElapsedGameTime.TotalSeconds);
+      if ((double) this.animHealth > (double) this.Health && (double) this.animHealth 
+                - (double) num <= (double) this.Health)
+        this.animHealth = this.Health;
+      else if ((double) this.animHealth < (double) this.Health
+                && (double) this.animHealth - (double) num >= (double) this.Health)
+        this.animHealth = this.Health;
+      else
+        this.animHealth += (double) this.animHealth > (double) this.Health ? -num : num;
+    }
+
+    public override void Draw(SharpDrawBatch batch, GameTime time)
+    {
+      base.Draw(batch, time);
+      Vector2 virtualScreen = Resolution.VirtualScreen;
+      float num = (float) (1.0 - (double) this.animHealth / 100.0);
+      batch.Draw(this.text, new Rectangle(0, 0, (int) virtualScreen.X, 
+          (int) virtualScreen.Y), Color.DarkRed * num * 0.7f);
+    }
+  }
 }

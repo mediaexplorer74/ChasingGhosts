@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// ChasingGhosts.Windows.Interfaces.IMusicManager
 
+#nullable disable
 namespace ChasingGhosts.Windows.Interfaces
 {
-    public interface IMusicManager
-    {
-        void LoadSongs(params string[] songAssets);
+  public interface IMusicManager
+  {
+    void LoadSongs(params string[] songAssets);
 
-        void Transition(int level);
+    void Transition(int level);
 
-        void EndSongs();
-    }
+    void EndSongs();
+  }
 }

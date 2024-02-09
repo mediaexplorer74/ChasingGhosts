@@ -1,216 +1,179 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// ChasingGhosts.Windows.World.Npc
+
 
 using ChasingGhosts.Windows.Interfaces;
 using ChasingGhosts.Windows.UI;
 using ChasingGhosts.Windows.ViewModels;
-
 using Microsoft.Xna.Framework;
-
 using Sharp2D.Engine.Common;
+using Sharp2D.Engine.Common.Components;
 using Sharp2D.Engine.Common.Components.Animations;
 using Sharp2D.Engine.Common.Components.Audio;
 using Sharp2D.Engine.Common.Components.Sprites;
 using Sharp2D.Engine.Common.ObjectSystem;
-using Sharp2D.Engine.Common.World;
-using Sharp2D.Engine.Drawing;
 using Sharp2D.Engine.Infrastructure;
+using System;
 
+#nullable disable
 namespace ChasingGhosts.Windows.World
 {
-    public class Npc : GameObject, IMovableCharacter
+  public class Npc : GameObject, IMovableCharacter, IPhysicsEntity
+  {
+    private readonly Player player;
+    private readonly PlayerViewModel viewModel;
+    private GameTimer attackTimer;
+    private MovementSprite spriteWalk;
+    private bool hasSeenPlayer;
+    private static readonly string[] Quotes = new string[5]
     {
-        private readonly Player player;
+      "Traitor!",
+      "Why do you chase humans?!",
+      "You horrible robot-being",
+      "Life is futil-... eh machinery is futile!",
+      "Human-lover!"
+    };
 
-        private readonly PlayerViewModel viewModel;
-
-        private GameTimer attackTimer;
-
-        private MovementSprite spriteWalk;
-
-        private bool hasSeenPlayer;
-
-        public Npc(Player player, PlayerViewModel viewModel)
-        {
-            this.player = player;
-            this.viewModel = viewModel;
-        }
-
-        public Movement Direction { get; private set; }
-
-        public float MaxMovement { get; private set; } = 200;
-
-        public Vector2 Movement { get; private set; }
-
-        public override void Initialize(IResolver resolver)
-        {
-            this.Width = 72;
-            this.Height = 72;
-            var visual = new Sprite(Color.GreenYellow * .25f, (int)this.Width, (int)this.Height);
-            visual.CenterObject();
-            this.Components.Add(visual);
-            visual.IsVisible = false;
-
-            this.spriteWalk = new MovementSprite("npc_walk", TimeSpan.FromSeconds(.5f));
-            this.spriteWalk.Start();
-            this.Components.Add(this.spriteWalk);
-
-            this.hasSeenPlayer = false;
-
-            base.Initialize(resolver);
-        }
-
-        public override void Update(GameTime time)
-        {
-            base.Update(time);
-
-            if (this.IsPaused)
-            {
-                this.Movement = Vector2.Zero;
-                return;
-            }
-
-            this.UpdateSeenPlayer();
-
-            if (!this.hasSeenPlayer)
-            {
-                this.Movement = Vector2.Zero;
-                return;
-            }
-
-            this.HandlePlayerRange();
-
-            this.HandleMovement();
-
-            this.UpdateDirection();
-        }
-
-        private void UpdateSeenPlayer()
-        {
-            if (this.hasSeenPlayer)
-            {
-                return;
-            }
-
-            var diff = this.GlobalPosition - this.player.GlobalPosition;
-            var halfScreen = Resolution.VirtualScreen / 2f;
-            if (Math.Abs(diff.X) <= halfScreen.X && Math.Abs(diff.Y) <= halfScreen.Y)
-            {
-                this.hasSeenPlayer = true;
-                this.AddTextBubble();
-            }
-        }
-
-        private static readonly string[] Quotes =
-        {
-            "Traitor!",
-            "Why do you chase humans?!",
-            "You horrible robot-being",
-            "Life is futil-... eh machinery is futile!",
-            "Human-lover!"
-        };
-
-        private void AddTextBubble()
-        {
-            var rnd = new Random();
-
-            var speech = new SpeechBubble
-            {
-                LocalPosition = new Vector2(30, -50),
-                Text = Quotes[rnd.Next(0, Quotes.Length)]
-            };
-            this.Add(speech);
-            var timer = new GameTimer(TimeSpan.FromSeconds(5));
-            timer.Expired += (s, e) =>
-            {
-                this.Components.Remove(timer);
-                ValueAnimator.PlayAnimation(speech, f => speech.Opacity = 1 - f, TimeSpan.FromSeconds(.5f));
-            };
-            this.Components.Add(timer);
-        }
-
-        private void UpdateDirection()
-        {
-            var direction = MovementHelper.GetMovement(this.Movement);
-            if (direction != World.Movement.None)
-            {
-                this.spriteWalk.Direction = direction;
-            }
-        }
-
-        private void HandlePlayerRange()
-        {
-            if (this.attackTimer != null)
-            {
-                return;
-            }
-            if (!this.IsCloseEnoughToHit())
-            {
-                return;
-            }
-
-            this.attackTimer = new GameTimer(TimeSpan.FromSeconds(.75f));
-            this.attackTimer.Expired += (s, e) =>
-            {
-                this.Components.Remove(this.attackTimer);
-                this.Attack();
-                this.StartCooldown();
-            };
-            this.Components.Add(this.attackTimer);
-        }
-
-        private void StartCooldown()
-        {
-            this.MaxMovement = 50;
-            var cooldown = new GameTimer(TimeSpan.FromSeconds(1));
-            cooldown.Expired += (s, e) =>
-            {
-                this.Components.Remove(cooldown);
-                this.attackTimer = null;
-                this.MaxMovement = 200;
-            };
-            this.Components.Add(cooldown);
-        }
-
-        private void Attack()
-        {
-            if (!this.IsCloseEnoughToHit())
-            {
-                return;
-            }
-
-            if (this.viewModel.IsInvulnerable)
-            {
-                return;
-            }
-
-            this.viewModel.DamagePlayer(15f);
-
-            var rnd = new Random();
-            var hit = new AudioEffect(rnd.Next(2) == 0 ? "Audio/hit" : "Audio/hit2");
-            this.Components.Add(hit);
-            hit.Play();
-            hit.Stopped += (s, e) => this.Components.Remove(hit);
-        }
-
-        private bool IsCloseEnoughToHit() => Vector2.Distance(this.GlobalPosition, this.player.GlobalPosition) <= 100;
-
-        private void HandleMovement()
-        {
-            //return;
-            var m = this.player.GlobalPosition - this.GlobalPosition;
-            m.Normalize();
-            this.Movement = m;
-        }
-
-        public void PlayerDied()
-        {
-            this.IsPaused = true;
-            this.Movement = Vector2.Zero;
-        }
+    public Npc(Player player, PlayerViewModel viewModel)
+    {
+      this.player = player;
+      this.viewModel = viewModel;
     }
+
+    public ChasingGhosts.Windows.World.Movement Direction { get; private set; }
+
+    public float MaxMovement { get; private set; } = 200f;
+
+    public Vector2 Movement { get; private set; }
+
+    public override void Initialize(IResolver resolver)
+    {
+      this.Width = 72f;
+      this.Height = 72f;
+      Sprite sprite = new Sprite(Color.GreenYellow * 0.25f, (int) this.Width, (int) this.Height);
+      sprite.CenterObject();
+      this.Components.Add((Component) sprite);
+      sprite.IsVisible = false;
+      this.spriteWalk = new MovementSprite("npc_walk", TimeSpan.FromSeconds(0.5));
+      this.spriteWalk.Start();
+      this.Components.Add((Component) this.spriteWalk);
+      this.hasSeenPlayer = false;
+      base.Initialize(resolver);
+    }
+
+    public override void Update(GameTime time)
+    {
+      base.Update(time);
+      if (this.IsPaused)
+      {
+        this.Movement = Vector2.Zero;
+      }
+      else
+      {
+        this.UpdateSeenPlayer();
+        if (!this.hasSeenPlayer)
+        {
+          this.Movement = Vector2.Zero;
+        }
+        else
+        {
+          this.HandlePlayerRange();
+          this.HandleMovement();
+          this.UpdateDirection();
+        }
+      }
+    }
+
+    private void UpdateSeenPlayer()
+    {
+      if (this.hasSeenPlayer)
+        return;
+      Vector2 vector2_1 = this.GlobalPosition - this.player.GlobalPosition;
+      Vector2 vector2_2 = Resolution.VirtualScreen / 2f;
+      if ((double) Math.Abs(vector2_1.X) > (double) vector2_2.X || (double) Math.Abs(vector2_1.Y) > (double) vector2_2.Y)
+        return;
+      this.hasSeenPlayer = true;
+      this.AddTextBubble();
+    }
+
+    private void AddTextBubble()
+    {
+      Random random = new Random();
+      SpeechBubble speechBubble = new SpeechBubble();
+      speechBubble.LocalPosition = new Vector2(30f, -50f);
+      speechBubble.Text = Npc.Quotes[random.Next(0, Npc.Quotes.Length)];
+      SpeechBubble speech = speechBubble;
+      this.Add((GameObject) speech);
+      GameTimer timer = new GameTimer(TimeSpan.FromSeconds(5.0));
+      timer.Expired += (EventHandler) ((s, e) =>
+      {
+        this.Components.Remove((Component) timer);
+        ValueAnimator.PlayAnimation((GameObject) speech, (Action<float>) (f => speech.Opacity = 1f - f), TimeSpan.FromSeconds(0.5));
+      });
+      this.Components.Add((Component) timer);
+    }
+
+    private void UpdateDirection()
+    {
+      ChasingGhosts.Windows.World.Movement movement = MovementHelper.GetMovement(this.Movement);
+      if (movement == ChasingGhosts.Windows.World.Movement.None)
+        return;
+      this.spriteWalk.Direction = movement;
+    }
+
+    private void HandlePlayerRange()
+    {
+      if (this.attackTimer != null || !this.IsCloseEnoughToHit())
+        return;
+      this.attackTimer = new GameTimer(TimeSpan.FromSeconds(0.75));
+      this.attackTimer.Expired += (EventHandler) ((s, e) =>
+      {
+        this.Components.Remove((Component) this.attackTimer);
+        this.Attack();
+        this.StartCooldown();
+      });
+      this.Components.Add((Component) this.attackTimer);
+    }
+
+    private void StartCooldown()
+    {
+      this.MaxMovement = 50f;
+      GameTimer cooldown = new GameTimer(TimeSpan.FromSeconds(1.0));
+      cooldown.Expired += (EventHandler) ((s, e) =>
+      {
+        this.Components.Remove((Component) cooldown);
+        this.attackTimer = (GameTimer) null;
+        this.MaxMovement = 200f;
+      });
+      this.Components.Add((Component) cooldown);
+    }
+
+    private void Attack()
+    {
+      if (!this.IsCloseEnoughToHit() || this.viewModel.IsInvulnerable)
+        return;
+      this.viewModel.DamagePlayer(15f);
+      AudioEffect hit = new AudioEffect(new Random().Next(2) == 0 ? "Audio/hit" : "Audio/hit2");
+      this.Components.Add((Component) hit);
+      hit.Play();
+      hit.Stopped += (EventHandler) ((s, e) => this.Components.Remove((Component) hit));
+    }
+
+    private bool IsCloseEnoughToHit()
+    {
+      return (double) Vector2.Distance(this.GlobalPosition, this.player.GlobalPosition) <= 100.0;
+    }
+
+    private void HandleMovement()
+    {
+      Vector2 vector2 = this.player.GlobalPosition - this.GlobalPosition;
+      vector2.Normalize();
+      this.Movement = vector2;
+    }
+
+    public void PlayerDied()
+    {
+      this.IsPaused = true;
+      this.Movement = Vector2.Zero;
+    }
+  }
 }

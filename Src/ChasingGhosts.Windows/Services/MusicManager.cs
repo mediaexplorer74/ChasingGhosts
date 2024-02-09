@@ -1,83 +1,69 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// ChasingGhosts.Windows.Services.MusicManager
 
 using ChasingGhosts.Windows.Interfaces;
-
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Media;
-
 using Sharp2D.Engine.Common.Components;
 using Sharp2D.Engine.Common.Components.Animations;
-using Sharp2D.Engine.Common.ObjectSystem;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
+#nullable disable
 namespace ChasingGhosts.Windows.Services
 {
-    public class MusicManager : Component, IMusicManager
+  public class MusicManager : Component, IMusicManager
+  {
+    private readonly ContentManager contentManager;
+    private readonly List<SoundEffectInstance> songs = new List<SoundEffectInstance>();
+    private int currentLevel;
+
+    public MusicManager(ContentManager contentManager) => this.contentManager = contentManager;
+
+    public void LoadSongs(params string[] songAssets)
     {
-        private readonly ContentManager contentManager;
-
-        private readonly List<SoundEffectInstance> songs = new List<SoundEffectInstance>();
-
-        private int currentLevel;
-
-        public MusicManager(ContentManager contentManager)
-        {
-            this.contentManager = contentManager;
-        }
-
-        public void LoadSongs(params string[] songAssets)
-        {
-            foreach (var inst in this.songs.ToArray())
-            {
-                inst.Stop();
-                inst.Dispose();
-                this.songs.Remove(inst);
-            }
-            foreach (var asset in songAssets)
-            {
-                var inst = this.contentManager.Load<SoundEffect>(asset).CreateInstance();
-                inst.IsLooped = true;
-                inst.Volume = 0;
-                inst.Play();
-                this.songs.Add(inst);
-            }
-
-            this.songs.First().Volume = .8f;
-        }
-
-        public void Transition(int level)
-        {
-            if (this.currentLevel >= level)
-            {
-                return;
-            }
-
-            var current = this.songs[this.currentLevel];
-            var next = this.songs[level];
-
-            this.currentLevel = level;
-
-            if (current == next)
-            {
-                current.Volume = 0.8f;
-                return;
-            }
-
-            var time = TimeSpan.FromSeconds(1);
-            ValueAnimator.PlayAnimation(this.Parent, val => current.Volume = (1f - val) * .8f, time);
-            ValueAnimator.PlayAnimation(this.Parent, val => next.Volume = val * .8f, time);
-        }
-
-        public void EndSongs()
-        {
-            foreach (var pair in this.songs)
-            {
-                pair.Volume = 0f;
-            }
-        }
+      foreach (SoundEffectInstance soundEffectInstance in this.songs.ToArray())
+      {
+        soundEffectInstance.Stop();
+        soundEffectInstance.Dispose();
+        this.songs.Remove(soundEffectInstance);
+      }
+      foreach (string songAsset in songAssets)
+      {
+        SoundEffectInstance instance = this.contentManager.Load<SoundEffect>(songAsset).CreateInstance();
+        instance.IsLooped = true;
+        instance.Volume = 0.0f;
+        instance.Play();
+        this.songs.Add(instance);
+      }
+      this.songs.First<SoundEffectInstance>().Volume = 0.8f;
     }
+
+    public void Transition(int level)
+    {
+      if (this.currentLevel >= level)
+        return;
+      SoundEffectInstance current = this.songs[this.currentLevel];
+      SoundEffectInstance next = this.songs[level];
+      this.currentLevel = level;
+      if (current == next)
+      {
+        current.Volume = 0.8f;
+      }
+      else
+      {
+        TimeSpan duration = TimeSpan.FromSeconds(1.0);
+        ValueAnimator.PlayAnimation(this.Parent, (Action<float>) 
+            (val => current.Volume = (float) ((1.0 - (double) val) * 0.800000011920929)), duration);
+        ValueAnimator.PlayAnimation(this.Parent, (Action<float>) 
+            (val => next.Volume = val * 0.8f), duration);
+      }
+    }
+
+    public void EndSongs()
+    {
+      foreach (SoundEffectInstance song in this.songs)
+        song.Volume = 0.0f;
+    }
+  }
 }

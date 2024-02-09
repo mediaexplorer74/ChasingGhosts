@@ -1,4 +1,4 @@
-## ChasingGhosts v1.0.1 ("the-sad-robot-shoe-chase" codename; pre-pre-alpha)
+## ChasingGhosts v1.0.3 ("the-sad-robot-shoe-chase" codename; pre-pre-alpha)
 
 
 This is my fork of the desktop monogame "the-sad-robot-shoe-chase" demo project:
@@ -13,8 +13,8 @@ My main goal is: explore ninject + Sharp2D game mechanics & adapt it for W10M (A
 
 
 ## My 2 cents (status)
-- Fast R.E.... 
-- Project tuned on(to) "firm" Monigame.Framwork 3.8.xx...
+- Fast R.E. of Ninject and Sharp2D components. 
+- Project tuned on(to) "firm" Monigame.Framwork 3.8.xx... all seems to be ok (game run).
 - Some project research and minimal "re-dev"...
 - W10(M) UWP template not ready ready... ("Game components" is hardcore!)
 

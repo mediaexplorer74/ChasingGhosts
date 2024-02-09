@@ -1,47 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// ChasingGhosts.Windows.ViewModels.PlayerViewModel
+
 
 using ChasingGhosts.Windows.World;
+using System;
 
+#nullable disable
 namespace ChasingGhosts.Windows.ViewModels
 {
-    public class PlayerViewModel
+  public class PlayerViewModel
+  {
+    public float Health { get; private set; } = 100f;
+
+    public event EventHandler Dies;
+
+    public bool IsAlive => (double) this.Health > 0.0;
+
+    public ShoeType ShoeType { get; set; }
+
+    public bool IsInvulnerable { get; set; }
+
+    public void DamagePlayer(float damage)
     {
-        public float Health { get; private set; } = 100f;
-
-        public event EventHandler Dies;
-
-        public bool IsAlive => this.Health > 0f;
-
-        public ShoeType ShoeType { get; set; } = ShoeType.None;
-
-        public bool IsInvulnerable { get; set; } = false;
-
-        public void DamagePlayer(float damage)
-        {
-            if (this.IsInvulnerable)
-            {
-                return;
-            }
-
-            var oldHealth = this.Health;
-            this.Health -= damage;
-            if (this.Health <= 0 && oldHealth > 0)
-            {
-                this.Dies?.Invoke(this, EventArgs.Empty);
-            }
-        }
-
-        public void HealPlayer(float healing)
-        {
-            this.Health += healing;
-            if (this.Health >= 100)
-            {
-                this.Health = 100;
-            }
-        }
+      if (this.IsInvulnerable)
+        return;
+      float health = this.Health;
+      this.Health -= damage;
+      if ((double) this.Health > 0.0 || (double) health <= 0.0)
+        return;
+      EventHandler dies = this.Dies;
+      if (dies == null)
+        return;
+      dies((object) this, EventArgs.Empty);
     }
+
+    public void HealPlayer(float healing)
+    {
+      this.Health += healing;
+      if ((double) this.Health < 100.0)
+        return;
+      this.Health = 100f;
+    }
+  }
 }

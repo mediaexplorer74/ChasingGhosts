@@ -1,187 +1,60 @@
-﻿using System;
+﻿// ChasingGhosts.Windows.GamePath
+
+using ChasingGhosts.Windows.World;
+using Microsoft.Xna.Framework;
+using Sharp2D.Engine.Common.ObjectSystem;
+using Sharp2D.Engine.Infrastructure;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using ChasingGhosts.Windows.Interfaces;
-using ChasingGhosts.Windows.World;
-
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-
-using Sharp2D.Engine.Common;
-using Sharp2D.Engine.Common.Components.Animations;
-using Sharp2D.Engine.Common.Components.Animations.Predefined;
-using Sharp2D.Engine.Common.Components.Sprites;
-using Sharp2D.Engine.Common.ObjectSystem;
-using Sharp2D.Engine.Common.World;
-using Sharp2D.Engine.Drawing;
-using Sharp2D.Engine.Helper;
-using Sharp2D.Engine.Infrastructure;
-
+#nullable disable
 namespace ChasingGhosts.Windows
 {
-    //public class GeneratedPath : GameObject
-    //{
-    //    private const int Distance = 250;
+  public class GamePath : GameObject
+  {
+    private readonly Vector2[] dots;
 
-    //    public override void Initialize(IResolver resolver)
-    //    {
-    //        GenerateDots(15);
-
-    //        base.Initialize(resolver);
-    //    }
-
-    //    public GamePath CreatePath(Vector2 playerPosition)
-    //    {
-    //        var start = playerPosition - this.GlobalPosition;
-
-    //        foreach (var gamePath in this.Children.OfType<GamePath>().ToArray())
-    //        {
-    //            this.Remove(gamePath);
-    //        }
-
-    //        var path = new GamePath(GenerateDots(15).Select(v => start + v).ToArray());
-    //        this.Add(path);
-    //        return path;
-    //    }
-
-    //    private static Vector2[] GenerateDots(int segments)
-    //    {
-    //        var dots = new List<Vector2>();
-
-    //        var rnd = new Random();
-    //        var rotation = rnd.Next(0, 360);
-    //        var currentPos = Vector2.Zero;
-    //        dots.Add(currentPos);
-    //        for (int i = 0; i < segments; i++)
-    //        {
-    //            currentPos += SharpMathHelper.Rotate(new Vector2(0, Distance), Vector2.Zero, rotation);
-    //            dots.Add(currentPos);
-    //            const int MaxRotation = 75;
-    //            rotation += rnd.Next(-MaxRotation, MaxRotation);
-    //        }
-
-    //        return dots.ToArray();
-    //    }
-    //}
-
-    public class GamePath : GameObject
+    public GamePath(Vector2[] dots)
     {
-        private readonly Vector2[] dots;
-
-        public GamePath(Vector2[] dots)
-        {
-            var root = dots.First();
-            if (root != Vector2.Zero)
-            {
-                dots = dots.Select(v => v - root).ToArray();
-            }
-
-            this.dots = dots;
-        }
-
-        public override void Initialize(IResolver resolver)
-        {
-            var foot = ShoeFoot.Right;
-
-            for (var i = 0; i < this.dots.Length - 1; i++)
-            {
-                var here = this.dots[i];
-                var next = this.dots[i + 1];
-                var degrees = MathHelper.ToDegrees((float)Math.Atan2(next.Y - here.Y, next.X - here.X));
-
-                const float Threshold = 40f;
-                while (Vector2.Distance(here, next) > Threshold)
-                {
-                    var distance = next - here;
-                    distance.Normalize();
-                    distance *= Threshold;
-                    here += distance;
-
-                    this.Add(new ShoePrint(here, degrees, foot));
-                    foot = foot == ShoeFoot.Left ? ShoeFoot.Right : ShoeFoot.Left;
-                }
-            }
-
-            var prints = this.Children.OfType<ShoePrint>().ToArray();
-            var section = prints.Length/5f;
-            for (int i = 0; i < prints.Length; i++)
-            {
-                if (i >= section * 4f)
-                {
-                    prints[i].Level = 4;
-                }
-                else if (i >= section * 3f)
-                {
-                    prints[i].Level = 3;
-                }
-                else if (i >= section * 2f)
-                {
-                    prints[i].Level = 2;
-                }
-                else if (i >= section * 1f)
-                {
-                    prints[i].Level = 1;
-                }
-            }
-
-            base.Initialize(resolver);
-        }
+      Vector2 root = ((IEnumerable<Vector2>) dots).First<Vector2>();
+      if (root != Vector2.Zero)
+        dots = ((IEnumerable<Vector2>) dots).Select<Vector2, Vector2>((Func<Vector2, Vector2>) (v => v - root)).ToArray<Vector2>();
+      this.dots = dots;
     }
 
-    public class ShoePrint : GameObject, IShoePrint
+    public override void Initialize(IResolver resolver)
     {
-        private readonly Sprite shoeSprite;
-
-        public ShoePrint(Vector2 localPosition, float turnDegrees, ShoeFoot foot)
+      ShoeFoot foot = ShoeFoot.Right;
+      for (int index = 0; index < this.dots.Length - 1; ++index)
+      {
+        Vector2 dot1 = this.dots[index];
+        Vector2 dot2 = this.dots[index + 1];
+        float degrees = MathHelper.ToDegrees((float) Math.Atan2((double) dot2.Y - (double) dot1.Y, (double) dot2.X - (double) dot1.X));
+        while ((double) Vector2.Distance(dot1, dot2) > 40.0)
         {
-            this.LocalPosition = localPosition;
-            this.LocalRotation = turnDegrees;
-
-            const float Offset = 10;
-            this.shoeSprite = Sprite.Load("shoe");
-            this.shoeSprite.Scale = new Vector2(.8f);
-            this.shoeSprite.CenterObject();
-            this.shoeSprite.SpriteEffect = foot == ShoeFoot.Right ? SpriteEffects.None : SpriteEffects.FlipVertically;
-            this.Add(
-                new GameObject
-                {
-                    LocalPosition = new Vector2(0, foot == ShoeFoot.Right ? Offset : -Offset),
-                    Components =
-                    {
-                        this.shoeSprite
-                    }
-                });
+          Vector2 vector2 = dot2 - dot1;
+          vector2.Normalize();
+          vector2 *= 40f;
+          dot1 += vector2;
+          this.Add((GameObject) new ShoePrint(dot1, degrees, foot));
+          foot = foot == ShoeFoot.Left ? ShoeFoot.Right : ShoeFoot.Left;
         }
-
-        public bool IsActive { get; private set; } = true;
-
-        public Color Tint
-        {
-            get => this.shoeSprite.Tint;
-            set => this.shoeSprite.Tint = value;
-        }
-
-        public int Level { get; set; }
-
-        public void Dismiss()
-        {
-            this.IsActive = false;
-            var animation = ValueAnimator.PlayAnimation(this, val => this.shoeSprite.Tint = Color.White * val, TimeSpan.FromSeconds(.5f));
-            animation.Easing = AnimationEase.CubicEaseOut;
-            animation.Loop = false;
-            animation.Inverse = true;
-        }
+      }
+      ShoePrint[] array = this.Children.OfType<ShoePrint>().ToArray<ShoePrint>();
+      float num = (float) array.Length / 5f;
+      for (int index = 0; index < array.Length; ++index)
+      {
+        if ((double) index >= (double) num * 4.0)
+          array[index].Level = 4;
+        else if ((double) index >= (double) num * 3.0)
+          array[index].Level = 3;
+        else if ((double) index >= (double) num * 2.0)
+          array[index].Level = 2;
+        else if ((double) index >= (double) num * 1.0)
+          array[index].Level = 1;
+      }
+      base.Initialize(resolver);
     }
-
-    public interface IShoePrint
-    {
-        bool IsActive { get; }
-
-        void Dismiss();
-
-        Rectanglef GlobalRegion { get; }
-
-        int Level { get; set; }
-    }
+  }
 }

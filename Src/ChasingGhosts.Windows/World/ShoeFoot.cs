@@ -1,8 +1,11 @@
-﻿namespace ChasingGhosts.Windows.World
+﻿// ChasingGhosts.Windows.World.ShoeFoot
+
+#nullable disable
+namespace ChasingGhosts.Windows.World
 {
-    public enum ShoeFoot
-    {
-        Right,
-        Left
-    }
+  public enum ShoeFoot
+  {
+    Right,
+    Left,
+  }
 }

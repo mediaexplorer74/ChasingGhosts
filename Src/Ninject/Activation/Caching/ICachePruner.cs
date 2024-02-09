@@ -1,0 +1,28 @@
+﻿// Decompiled with JetBrains decompiler
+// Type: Ninject.Activation.Caching.ICachePruner
+// Assembly: Ninject, Version=3.0.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7
+// MVID: 38474FF7-7B1D-4207-94FE-C703C871E3C3
+// Assembly location: C:\Users\Admin\Desktop\RE\ChasingGhosts\Ninject.dll
+// XML documentation location: C:\Users\Admin\Desktop\RE\ChasingGhosts\Ninject.xml
+
+using Ninject.Components;
+using System;
+
+#nullable disable
+namespace Ninject.Activation.Caching
+{
+  /// <summary>
+  /// Prunes instances from an <see cref="T:Ninject.Activation.Caching.ICache" /> based on environmental information.
+  /// </summary>
+  public interface ICachePruner : INinjectComponent, IDisposable
+  {
+    /// <summary>
+    /// Starts pruning the specified cache based on the rules of the pruner.
+    /// </summary>
+    /// <param name="cache">The cache that will be pruned.</param>
+    void Start(IPruneable cache);
+
+    /// <summary>Stops pruning.</summary>
+    void Stop();
+  }
+}

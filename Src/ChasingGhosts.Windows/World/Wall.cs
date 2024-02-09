@@ -1,12 +1,12 @@
-﻿using ChasingGhosts.Windows.Interfaces;
+﻿// ChasingGhosts.Windows.World.Wall
 
+using ChasingGhosts.Windows.Interfaces;
 using Sharp2D.Engine.Common.ObjectSystem;
-using Sharp2D.Engine.Common.World;
 
+#nullable disable
 namespace ChasingGhosts.Windows.World
 {
-    public class Wall : GameObject, IWall
-    {
-
-    }
+  public class Wall : GameObject, IWall, IPhysicsEntity
+  {
+  }
 }
