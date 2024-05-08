@@ -16,7 +16,7 @@ My main goal is: explore ninject + Sharp2D game mechanics & adapt it for W10M (A
 - Fast R.E. of Ninject and Sharp2D components. 
 - Project tuned on(to) "firm" Monigame.Framwork 3.8.xx... all seems to be ok (game run).
 - Some project research and minimal "re-dev"...
-- W10(M) UWP template not ready ready... ("Game components" is hardcore!)
+- W10(M) UWP template not ready ("Game components" is hardcore!)
 
 ## A few words (description) frow the author(original)
 
